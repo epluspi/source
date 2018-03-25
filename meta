@@ -1,0 +1,105 @@
+#include <vector>
+#include <algorithm>
+#include <cassert>
+#include <iostream>
+
+using Graph = std::vector<std::vector<int>>;
+
+class PoorManHeap {
+public:
+    PoorManHeap(std::size_t n) : inheap(n, true), w(n, std::numeric_limits<int>::max()) { }
+
+    int64_t getW(std::size_t u) const noexcept { return w[u]; }
+
+    void setSource(std::size_t s) noexcept { w[s] = 0; }
+
+    int pop() {
+        int res = -1;
+        for (std::size_t i = 0; i < w.size(); ++i) {
+            if (!inheap[i])
+                continue;
+            if (res < 0 || w[res] >= w[i])
+                res = i;
+        }
+        assert(res >= 0);
+        inheap[res] = false;
+        return res;
+    }
+
+    bool demote(std::size_t v, int64_t value) {
+        if (!inheap[v])
+            return false;
+        if (value <= w[v]) {
+            w[v] = value;
+            return true;
+        }
+        return false;
+    }
+
+private:
+    std::vector<bool> inheap;
+    std::vector<int64_t> w;
+};
+
+template<typename F>
+void meta(const Graph& g, std::size_t source, F&& f) {
+    assert(source < g.size());
+
+    PoorManHeap h(g.size());
+    std::vector<int> t(g.size());
+    h.setSource(source);
+    t[source] = source;
+
+    for (std::size_t i = 0; i < g.size(); ++i) {
+        int u = h.pop(); // O(n)
+        for (std::size_t v = 0; v < g.size(); ++v) {
+            int64_t value = f(g[u][v], h.getW(u)); //O(1)
+            if (h.demote(v, value)) //O(1)
+                t[v] = u;
+        }
+    }
+
+    //Print out
+    std::cout << "Source: " << source << std::endl;
+
+    std::cout << "Tree: ";
+    for (std::size_t v = 0; v < g.size(); ++v)
+        std::cout << t[v] << "->" << v << ' ';
+    std::cout << std::endl;
+    
+    std::cout << "Weight: ";
+    for (std::size_t v = 0; v < g.size(); ++v)
+        std::cout << v << ':' << h.getW(v) << ' ';
+    std::cout << std::endl;
+
+    int64_t res = 0;
+    for (std::size_t v = 0; v < g.size(); ++v)
+        res += h.getW(v);
+    std::cout << "Total weight: " << res << std::endl;
+}
+
+
+int main()
+{
+    auto prim = [](int64_t value, int64_t base) { return value; };
+    auto dijkstra = [](int64_t value, int64_t base) { return value + base; };
+    Graph g {
+        {0, 7, 2, 5},
+        {7, 0, 4, 3},
+        {2, 4, 0, 8},
+        {5, 3, 8, 0}
+    };
+
+    std::cout << "Prim" << std::endl;
+    meta(g, 0, prim);
+    std::cout << std::endl;
+
+    std::cout << "Dijkstra" << std::endl;
+    meta(g, 0, dijkstra);
+    std::cout << std::endl;
+
+    char x;
+    std::cin >> x;
+}
+
+
