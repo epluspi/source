@@ -1,0 +1,28 @@
+//PS = empyt | P PS
+//P = (PS)
+struct Node {
+    std::string val;
+    std::vector<Node*> chs;
+};
+
+Node* parseP(const char* s, int n, int& i);
+std::vector<Node*> parsePS(const char* s, int n, int& i);
+
+std::vector<Node*> parsePS(const char* s, int n, int& i) {
+    if (i == n || s[i] == ')')
+        return {};
+    Node* node = parseP(s, n, i);
+    auto ps = parsePS(s, n, i);
+    ps.insert(ps.begin(), node);
+    return ps;
+}
+
+Node* parseP(const char* s, int n, int& i) {
+    int si = i;
+    Node * node = new Node;
+    ++i;
+    node->chs = parsePS(s, n, i);
+    node->val = std::string(&s[si], &s[i] + 1);
+    ++i;
+    return node;
+}
