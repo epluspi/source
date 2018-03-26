@@ -1,3 +1,7 @@
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <iostream>
 //PS = empyt | P PS
 //P = (PS)
 struct Node {
@@ -9,7 +13,7 @@ Node* parseP(const char* s, int n, int& i);
 std::vector<Node*> parsePS(const char* s, int n, int& i);
 
 std::vector<Node*> parsePS(const char* s, int n, int& i) {
-    if (i == n || s[i] == ')')
+    if (i == n || s[i] == '0')
         return {};
     Node* node = parseP(s, n, i);
     auto ps = parsePS(s, n, i);
@@ -22,7 +26,40 @@ Node* parseP(const char* s, int n, int& i) {
     Node * node = new Node;
     ++i;
     node->chs = parsePS(s, n, i);
-    node->val = std::string(&s[si], &s[i] + 1);
     ++i;
+    node->val = std::string(&s[si], &s[i]);
     return node;
+}
+
+std::string fix(std::vector<Node*>& nodes) {
+    std::sort(nodes.begin(), nodes.end(), [](const Node* x, const Node* y) {
+        return x->val > y->val;
+    });
+
+    std::string st;
+    for (Node* node : nodes) {
+        node->val = std::string("1") + fix(node->chs) + "0";
+        st += node->val;
+    }
+    return st;
+}
+
+void release(std::vector<Node*>& nodes) {
+    for (auto* node : nodes) {
+        release(node->chs);
+        delete node;
+    }
+}
+
+int main() {
+    std::string s{ "11011000" };
+
+    int i = 0;;
+    auto nodes = parsePS(s.data(), s.size(), i);
+    std::string res = fix(nodes);
+    std::cout << res << std::endl;
+    release(nodes);
+
+    char c;
+    std::cin >> c;
 }
